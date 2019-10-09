@@ -1,0 +1,63 @@
+''' Custom imp of kd-tree for use in binning mutlivariate samples '''
+
+import numpy as np 
+
+class Node:
+
+    def __init__(self, data=None, bounds=None, depth=None, aux_data=None):
+        self.data = data 
+        self.aux_data = aux_data
+        self.depth = depth or 0
+
+        if data is not None and aux_data is not None:
+            assert(data.shape[0] == aux_data.shape[0])
+
+        if bounds is None:
+            self.bounds = self._determine_bounds()
+        else:
+            self.bounds = bounds 
+
+    def _determine_bounds(self):
+        bounds = np.zeros((2, self.data.shape[1]))
+        bounds[0,:] = self.data.min(axis=0)
+        bounds[1,:] = self.data.max(axis=0)
+        return bounds 
+
+    def split(self):
+        axis = self.depth % self.data.shape[1]
+        idx = np.argsort(self.data[:,axis])
+        split_idx = self.data.shape[0] // 2
+        self.data = self.data[idx]
+
+        left_bounds, right_bounds = self.bounds.copy(), self.bounds.copy()
+        left_bounds[1,axis] = self.data[self.data.shape[0]//2,axis]
+        right_bounds[0,axis] = self.data[self.data.shape[0]//2,axis]
+
+        if self.aux_data is not None:
+            self.aux_data = self.aux_data[idx]
+
+            return (Node(data=self.data[:split_idx,:], bounds=left_bounds, 
+                         depth=self.depth+1, aux_data=self.aux_data[:split_idx]), 
+                    Node(data=self.data[split_idx:,:], bounds=right_bounds, 
+                         depth=self.depth+1, aux_data=self.aux_data[split_idx:]))
+
+        else:
+            return (Node(data=self.data[:split_idx,:], bounds=left_bounds, depth=self.depth+1), 
+                    Node(data=self.data[split_idx:,:], bounds=right_bounds, depth=self.depth+1))
+
+def build(root, leafsize=100, nodes=None):
+    nodes = nodes or [] 
+
+    if root.data.shape[0] <= leafsize:
+        nodes.append(root)
+        return nodes
+
+    else:
+        left, right = root.split() 
+        left_tree = build(left, leafsize, nodes=nodes)
+        right_tree = build(right, leafsize, nodes=nodes)
+        nodes.extend(left_tree)
+        nodes.extend(right_tree)
+
+    return nodes 
+

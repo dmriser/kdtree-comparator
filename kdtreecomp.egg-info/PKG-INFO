@@ -1,0 +1,10 @@
+Metadata-Version: 1.0
+Name: kdtreecomp
+Version: 0.1
+Summary: Package for creating a binning scheme based on kd-trees
+Home-page: http://github.com/dmriser/kdtree-comparator
+Author: David Riser
+Author-email: dmriser@gmail.com
+License: MIT
+Description: UNKNOWN
+Platform: UNKNOWN
